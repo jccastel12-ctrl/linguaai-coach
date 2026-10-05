@@ -1,0 +1,2 @@
+import { VerifyEmailClient } from "@/components/auth/VerifyEmailClient";
+export default async function VerifyEmailPage({searchParams}:{searchParams:Promise<{token?:string}>}){const {token=""}=await searchParams;return <section className="auth-page"><div className="auth-card"><span className="eyebrow">Cuenta</span><h1>Verificar correo</h1>{token?<VerifyEmailClient token={token}/>:<p className="form-error">Falta el token de verificación.</p>}</div></section>}

@@ -1,0 +1,2 @@
+import { ForgotPasswordForm } from "@/components/auth/ForgotPasswordForm";
+export default function ForgotPasswordPage(){return <section className="auth-page"><div className="auth-card"><span className="eyebrow">Recuperar acceso</span><h1>Restablecer contraseña</h1><p className="muted">Escribe tu correo. Por seguridad, la respuesta será la misma exista o no la cuenta.</p><ForgotPasswordForm/></div></section>}

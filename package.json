@@ -1,0 +1,19 @@
+{
+  "name": "linguaai-coach",
+  "version": "1.4.0",
+  "private": true,
+  "description": "Monorepo de LinguaAI Coach (web + API + paquetes compartidos)",
+  "workspaces": [
+    "apps/web",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=20.9.0"
+  },
+  "scripts": {
+    "dev:web": "npm run dev --workspace @linguaai/web",
+    "build:web": "npm run build --workspace @linguaai/web",
+    "lint": "npm run lint --workspace @linguaai/web",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  }
+}

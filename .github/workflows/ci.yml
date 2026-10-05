@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  api:
+    name: API (lint + tests + migraciones)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/api
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: linguaai
+          POSTGRES_PASSWORD: ci-only-password
+          POSTGRES_DB: linguaai_ci
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U linguaai -d linguaai_ci"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      ENVIRONMENT: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: apps/api/requirements-dev.txt
+      - run: pip install -r requirements-dev.txt
+      - name: Ruff lint
+        run: ruff check .
+      - name: Ruff format check
+        run: ruff format --check .
+      - name: Pytest
+        run: pytest
+      - name: Migraciones contra PostgreSQL real (upgrade → downgrade → upgrade)
+        env:
+          DATABASE_URL: postgresql+psycopg://linguaai:ci-only-password@localhost:5432/linguaai_ci
+        run: |
+          alembic upgrade head
+          alembic downgrade base
+          alembic upgrade head
+
+  web:
+    name: Web (lint + typecheck + build)
+    runs-on: ubuntu-latest
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run build:web

@@ -1,0 +1,4 @@
+"use client";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+export function VerifyEmailClient({token}:{token:string}){const [state,setState]=useState<"loading"|"ok"|"error">("loading");useEffect(()=>{fetch("/api/account/verify-email",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token})}).then(r=>setState(r.ok?"ok":"error")).catch(()=>setState("error"));},[token]);return <div className="auth-form">{state==="loading"?<p>Verificando correo…</p>:state==="ok"?<><p className="form-success">Tu correo quedó verificado.</p><Link className="button button-primary button-block" href="/dashboard">Ir al panel</Link></>:<><p className="form-error">El enlace no es válido o ya expiró.</p><Link className="button button-secondary button-block" href="/account">Solicitar otro enlace</Link></>}</div>}

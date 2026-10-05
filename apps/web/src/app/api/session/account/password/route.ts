@@ -1,0 +1,3 @@
+import { NextResponse } from "next/server";
+import { backendFetch, clearSessionToken, getSessionToken, readApiError } from "@/lib/server-auth";
+export async function POST(request: Request){const token=await getSessionToken();if(!token)return NextResponse.json({detail:"No autenticado."},{status:401});const body=await request.text();const response=await backendFetch("/api/v1/auth/password/change",{method:"POST",body},token);if(!response.ok)return NextResponse.json({detail:await readApiError(response)},{status:response.status});await clearSessionToken();return NextResponse.json(await response.json());}

@@ -1,0 +1,2 @@
+import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
+export default async function ResetPasswordPage({searchParams}:{searchParams:Promise<{token?:string}>}){const {token=""}=await searchParams;return <section className="auth-page"><div className="auth-card"><span className="eyebrow">Seguridad</span><h1>Nueva contraseña</h1>{token?<ResetPasswordForm token={token}/>:<p className="form-error">Falta el token de recuperación.</p>}</div></section>}
