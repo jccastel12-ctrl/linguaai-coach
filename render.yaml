@@ -9,8 +9,7 @@ services:
     plan: free
     region: virginia
     buildCommand: pip install -r apps/api/requirements.txt
-    preDeployCommand: cd apps/api && alembic upgrade head
-    startCommand: cd apps/api && uvicorn app.main:app --host 0.0.0.0 --port $PORT --proxy-headers
+    startCommand: cd apps/api && alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT --proxy-headers
     healthCheckPath: /health/ready
     envVars:
       - key: ENVIRONMENT
