@@ -15,6 +15,9 @@ services:
     healthCheckPath: /health/ready
 
     envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.11
+
       - key: ENVIRONMENT
         value: staging
 
@@ -55,6 +58,9 @@ services:
     healthCheckPath: /
 
     envVars:
+      - key: NODE_VERSION
+        value: 20.18.0
+
       - key: API_HOSTPORT
         fromService:
           name: linguaai-coach-api
