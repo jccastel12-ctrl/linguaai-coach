@@ -25,6 +25,6 @@ class TranslationResponse(BaseModel):
     target_language: LanguageCode
     source_text: str
     translated_text: str
-    provider: Literal["rule_based", "openai_compatible"]
+    provider: Literal["rule_based", "openai_compatible", "azure_translator"]
     learning_note: str | None = None
     exact_match: bool = True

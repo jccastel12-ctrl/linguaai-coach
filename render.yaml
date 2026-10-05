@@ -44,7 +44,6 @@ services:
       - key: EMAIL_DELIVERY_MODE
         value: disabled
 
-
   - type: web
     name: linguaai-coach-web
     runtime: node
@@ -69,7 +68,6 @@ services:
 
       - key: NEXT_TELEMETRY_DISABLED
         value: "1"
-
 
 databases:
   - name: linguaai-coach-db

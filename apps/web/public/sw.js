@@ -1,4 +1,4 @@
-const CACHE_NAME = "linguaai-shell-v1.4.0";
+const CACHE_NAME = "linguaai-shell-v1.5.0";
 const STATIC_ASSETS = [
   "/offline",
   "/manifest.webmanifest",

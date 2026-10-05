@@ -1,8 +1,10 @@
 """Interchangeable translation providers.
 
-The rule-based provider keeps local development free and deterministic for a
-curated phrase set. The OpenAI-compatible provider handles arbitrary text when
-AI_PROVIDER=openai_compatible is configured.
+- ``rule_based`` keeps local development free and deterministic for a curated
+  phrase set.
+- ``openai_compatible`` handles arbitrary text through a chat-completions API.
+- ``azure_translator`` uses Microsoft Azure Translator for arbitrary ES/EN/SR
+  text without changing the tutor provider.
 """
 
 from __future__ import annotations
@@ -68,7 +70,6 @@ _PHRASES: tuple[dict[str, str], ...] = (
     {"es": "Necesito un médico", "en": "I need a doctor", "sr": "Treba mi lekar"},
 )
 
-# Accept both common Serbian Latin and Cyrillic demo inputs.
 _SERBIAN_ALIASES: dict[str, str] = {
     _normalize("Здраво"): _normalize("Zdravo"),
     _normalize("Хвала"): _normalize("Hvala"),
@@ -104,7 +105,7 @@ class RuleBasedTranslationProvider:
 
         raise TranslationUnavailableError(
             "La traducción local gratuita reconoce un conjunto de frases de demostración. "
-            "Configura AI_PROVIDER=openai_compatible para traducir texto libre."
+            "Configura TRANSLATION_PROVIDER=azure_translator u openai_compatible para traducir texto libre."
         )
 
     @staticmethod
@@ -129,6 +130,78 @@ class RuleBasedTranslationProvider:
     def _learning_note(source: str, target: str) -> str:
         names = {"es": "español", "en": "inglés", "sr": "serbio"}
         return f"Traducción de demostración {names[source]} → {names[target]}."
+
+
+class AzureTranslatorProvider:
+    """Arbitrary text translation using Microsoft Azure Translator REST v3."""
+
+    @staticmethod
+    def _contains_cyrillic(text: str) -> bool:
+        return any("\u0400" <= char <= "\u04ff" for char in text)
+
+    @classmethod
+    def _source_code(cls, code: str, text: str) -> str:
+        if code == "sr":
+            return "sr-Cyrl" if cls._contains_cyrillic(text) else "sr-Latn"
+        return code
+
+    @staticmethod
+    def _target_code(code: str) -> str:
+        # LinguaAI uses Serbian Latin by default for consistency in the UI.
+        return "sr-Latn" if code == "sr" else code
+
+    async def translate(self, text: str, source: str, target: str) -> TranslationResult:
+        api_key = settings.azure_translator_key.get_secret_value() if settings.azure_translator_key else ""
+        if not api_key:
+            raise TranslationProviderError(
+                "AZURE_TRANSLATOR_KEY is missing for TRANSLATION_PROVIDER=azure_translator"
+            )
+
+        headers = {
+            "Ocp-Apim-Subscription-Key": api_key,
+            "Content-Type": "application/json",
+        }
+        if settings.azure_translator_region:
+            headers["Ocp-Apim-Subscription-Region"] = settings.azure_translator_region
+
+        endpoint = settings.azure_translator_endpoint.rstrip("/") + "/translate"
+        params = {
+            "api-version": "3.0",
+            "from": self._source_code(source, text),
+            "to": self._target_code(target),
+        }
+
+        try:
+            async with httpx.AsyncClient(timeout=settings.ai_timeout_seconds) as client:
+                response = await client.post(
+                    endpoint,
+                    params=params,
+                    headers=headers,
+                    json=[{"text": text}],
+                )
+                response.raise_for_status()
+        except httpx.HTTPStatusError as exc:
+            status = exc.response.status_code
+            if status in (401, 403):
+                raise TranslationProviderError(
+                    "Azure Translator rejected the configured credentials or quota"
+                ) from exc
+            raise TranslationProviderError("Azure Translator returned an HTTP error") from exc
+        except httpx.HTTPError as exc:
+            raise TranslationProviderError("Azure Translator could not be reached") from exc
+
+        try:
+            payload = response.json()
+            translated = str(payload[0]["translations"][0]["text"]).strip()
+            if not translated:
+                raise ValueError("empty translation")
+            return TranslationResult(
+                translated_text=translated,
+                learning_note=None,
+                exact_match=True,
+            )
+        except (IndexError, KeyError, TypeError, ValueError) as exc:
+            raise TranslationProviderError("Azure Translator returned an invalid response") from exc
 
 
 class OpenAICompatibleTranslationProvider:
@@ -184,6 +257,9 @@ The learning_note is optional and, when useful, must be one concise note about a
 
 
 def get_translation_provider():
-    if settings.ai_provider == "openai_compatible":
+    provider = settings.effective_translation_provider
+    if provider == "azure_translator":
+        return AzureTranslatorProvider()
+    if provider == "openai_compatible":
         return OpenAICompatibleTranslationProvider()
     return RuleBasedTranslationProvider()

@@ -1,6 +1,6 @@
 {
   "name": "@linguaai/shared-types",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "private": true,
   "description": "Tipos TypeScript compartidos entre la web y otros clientes de LinguaAI Coach",
   "main": "./src/index.ts",

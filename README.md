@@ -2,7 +2,7 @@
 
 Plataforma SaaS de aprendizaje de idiomas asistida por IA. Idiomas de lanzamiento: **español**, **inglés** y **serbio** (alfabetos latino y cirílico).
 
-> Estado: **MVP v1.4.0**. Incluye autenticación, onboarding, perfiles, tutor conversacional, historial, progreso, traductor ES/EN/SR, voz básica de navegador, práctica de pronunciación, avatar tutor ligero, planes Basic/Pro, panel administrativo y experiencia móvil instalable como PWA. El análisis acústico de fonemas, checkout/pagos reales, avatares 3D/fotorrealistas y una app nativa siguen en la hoja de ruta.
+> Estado: **MVP v1.5.0**. Incluye autenticación, onboarding, perfiles, tutor conversacional, historial, progreso, traductor ES/EN/SR, voz básica de navegador, práctica de pronunciación, avatar tutor ligero, planes Basic/Pro, panel administrativo y experiencia móvil instalable como PWA. El análisis acústico de fonemas, checkout/pagos reales, avatares 3D/fotorrealistas y una app nativa siguen en la hoja de ruta.
 
 ---
 
@@ -375,3 +375,19 @@ Esta revisión adapta LinguaAI Coach para uso cotidiano desde teléfonos y table
 - Aviso de instalación para Android/Chromium y ayuda de “Añadir a pantalla de inicio” en iOS.
 
 La PWA requiere Internet para Tutor IA, traducción, autenticación y sincronización. Las funciones de voz dependen del soporte de reconocimiento y síntesis del navegador/dispositivo.
+
+
+## Traducción libre con Azure Translator
+
+La v1.5 permite mantener el Tutor IA en `rule_based` y usar Azure Translator únicamente para traducción libre.
+
+Variables de entorno de la API:
+
+```env
+TRANSLATION_PROVIDER=azure_translator
+AZURE_TRANSLATOR_KEY=...
+AZURE_TRANSLATOR_REGION=...
+AZURE_TRANSLATOR_ENDPOINT=https://api.cognitive.microsofttranslator.com
+```
+
+Si `TRANSLATION_PROVIDER` no está definido, el traductor conserva el comportamiento histórico y sigue `AI_PROVIDER`. El modo `rule_based` continúa disponible para desarrollo sin servicios externos.

@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     app_name: str = "LinguaAI Coach API"
-    app_version: str = "1.4.0"
+    app_version: str = "1.5.0"
     environment: Literal["development", "test", "staging", "production"] = "development"
     debug: bool = False
     api_v1_prefix: str = "/api/v1"
@@ -25,11 +25,20 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = Field(default=30, ge=1, le=1440)
 
+    # Tutor provider. Keep this separate from translation so the translator can
+    # use Azure while the tutor remains on the free deterministic provider.
     ai_provider: Literal["rule_based", "openai_compatible"] = "rule_based"
     ai_api_key: SecretStr | None = None
     ai_base_url: str = "https://api.openai.com/v1"
     ai_model: str = ""
     ai_timeout_seconds: int = Field(default=30, ge=5, le=120)
+
+    # Translation provider. None preserves the historical behavior and follows
+    # AI_PROVIDER (rule_based/openai_compatible). Azure is translation-only.
+    translation_provider: Literal["rule_based", "openai_compatible", "azure_translator"] | None = None
+    azure_translator_key: SecretStr | None = None
+    azure_translator_region: str | None = None
+    azure_translator_endpoint: str = "https://api.cognitive.microsofttranslator.com"
 
     # Payment integration is deliberately disabled in v1.0. These fields reserve
     # the configuration contract needed for a future Stripe checkout/webhook adapter.
@@ -54,12 +63,7 @@ class Settings(BaseSettings):
     @field_validator("database_url", mode="before")
     @classmethod
     def _normalize_database_url(cls, value: object) -> object:
-        """Accept managed-Postgres URLs while keeping the app on asyncpg.
-
-        Providers such as Render expose ``postgresql://`` connection strings.
-        SQLAlchemy async needs an explicit async driver, so normalize only the
-        scheme and preserve credentials, host, database and query parameters.
-        """
+        """Accept managed-Postgres URLs while keeping the app on asyncpg."""
         if not isinstance(value, str):
             return value
         if value.startswith("postgres://"):
@@ -75,6 +79,10 @@ class Settings(BaseSettings):
     @property
     def is_production(self) -> bool:
         return self.environment in ("staging", "production")
+
+    @property
+    def effective_translation_provider(self) -> str:
+        return self.translation_provider or self.ai_provider
 
     @model_validator(mode="after")
     def _validate_security(self) -> "Settings":
