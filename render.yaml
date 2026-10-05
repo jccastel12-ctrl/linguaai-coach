@@ -53,7 +53,7 @@ services:
 
     buildCommand: npm ci --no-audit --no-fund && npm run build:web
 
-    startCommand: API_INTERNAL_URL=http://$API_HOSTPORT npm run start --workspace @linguaai/web -- --hostname 0.0.0.0 --port $PORT
+    startCommand: npm run start --workspace @linguaai/web -- --hostname 0.0.0.0 --port $PORT
 
     healthCheckPath: /
 
@@ -61,11 +61,11 @@ services:
       - key: NODE_VERSION
         value: 20.18.0
 
-      - key: API_HOSTPORT
+      - key: API_INTERNAL_URL
         fromService:
           name: linguaai-coach-api
           type: web
-          property: hostport
+          envVarKey: RENDER_EXTERNAL_URL
 
       - key: NEXT_TELEMETRY_DISABLED
         value: "1"
