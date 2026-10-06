@@ -16,6 +16,12 @@ from dataclasses import dataclass
 
 import httpx
 
+from app.core.ai_client import (
+    AIClientConfigurationError,
+    AIClientError,
+    AIClientUnavailableError,
+    OpenAICompatibleChatClient,
+)
 from app.core.config import settings
 
 
@@ -206,10 +212,6 @@ class AzureTranslatorProvider:
 
 class OpenAICompatibleTranslationProvider:
     async def translate(self, text: str, source: str, target: str) -> TranslationResult:
-        api_key = settings.ai_api_key.get_secret_value() if settings.ai_api_key else ""
-        if not api_key or not settings.ai_model:
-            raise TranslationProviderError("AI_API_KEY/AI_MODEL is missing for the configured AI provider")
-
         names = {"es": "Spanish", "en": "English", "sr": "Serbian"}
         system_prompt = f"""
 You are the translation engine inside LinguaAI Coach.
@@ -222,26 +224,23 @@ The learning_note is optional and, when useful, must be one concise note about a
 """.strip()
 
         try:
-            async with httpx.AsyncClient(timeout=settings.ai_timeout_seconds) as client:
-                response = await client.post(
-                    settings.ai_base_url.rstrip("/") + "/chat/completions",
-                    headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-                    json={
-                        "model": settings.ai_model,
-                        "messages": [
-                            {"role": "system", "content": system_prompt},
-                            {"role": "user", "content": text},
-                        ],
-                        "temperature": 0.15,
-                        "max_tokens": 1000,
-                    },
-                )
-                response.raise_for_status()
-        except httpx.HTTPError as exc:
-            raise TranslationProviderError("The configured AI provider could not be reached") from exc
+            completion = await OpenAICompatibleChatClient().chat_completion(
+                [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": text},
+                ],
+                max_tokens=1000,
+                temperature=0.15,
+            )
+        except AIClientConfigurationError as exc:
+            raise TranslationProviderError(str(exc)) from exc
+        except AIClientUnavailableError as exc:
+            raise TranslationProviderError(str(exc)) from exc
+        except AIClientError as exc:
+            raise TranslationProviderError(str(exc)) from exc
 
         try:
-            content = response.json()["choices"][0]["message"]["content"].strip()
+            content = completion.content
             if content.startswith("```"):
                 content = re.sub(r"^```(?:json)?\s*", "", content, flags=re.IGNORECASE)
                 content = re.sub(r"\s*```$", "", content)
@@ -253,7 +252,7 @@ The learning_note is optional and, when useful, must be one concise note about a
                 raise ValueError("empty translation")
             return TranslationResult(translated_text=translated, learning_note=note or None, exact_match=True)
         except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
-            raise TranslationProviderError("The AI provider returned an invalid translation response") from exc
+            raise TranslationProviderError("El proveedor de IA devolvió una traducción inválida.") from exc
 
 
 def get_translation_provider():

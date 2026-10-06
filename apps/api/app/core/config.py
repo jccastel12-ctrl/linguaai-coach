@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     app_name: str = "LinguaAI Coach API"
-    app_version: str = "1.5.0"
+    app_version: str = "1.6.0"
     environment: Literal["development", "test", "staging", "production"] = "development"
     debug: bool = False
     api_v1_prefix: str = "/api/v1"
@@ -31,7 +31,10 @@ class Settings(BaseSettings):
     ai_api_key: SecretStr | None = None
     ai_base_url: str = "https://api.openai.com/v1"
     ai_model: str = ""
+    ai_fallback_model: str | None = None
     ai_timeout_seconds: int = Field(default=30, ge=5, le=120)
+    ai_retry_attempts: int = Field(default=3, ge=1, le=5)
+    ai_retry_backoff_seconds: float = Field(default=0.7, ge=0, le=5)
 
     # Translation provider. None preserves the historical behavior and follows
     # AI_PROVIDER (rule_based/openai_compatible). Azure is translation-only.

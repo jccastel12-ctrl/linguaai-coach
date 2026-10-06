@@ -10,8 +10,12 @@ import json
 import re
 from dataclasses import dataclass, field
 
-import httpx
-
+from app.core.ai_client import (
+    AIClientConfigurationError,
+    AIClientError,
+    AIClientUnavailableError,
+    OpenAICompatibleChatClient,
+)
 from app.core.config import settings
 
 
@@ -176,25 +180,21 @@ Return ONLY a valid JSON object with this shape:
             messages.append({"role": role, "content": content})
         messages.append({"role": "user", "content": text})
 
-        url = settings.ai_base_url.rstrip("/") + "/chat/completions"
         try:
-            async with httpx.AsyncClient(timeout=settings.ai_timeout_seconds) as client:
-                response = await client.post(
-                    url,
-                    headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-                    json={
-                        "model": settings.ai_model,
-                        "messages": messages,
-                        "temperature": 0.35,
-                        "max_tokens": 500,
-                    },
-                )
-                response.raise_for_status()
-        except httpx.HTTPError as exc:
-            raise TutorProviderError("The configured AI provider could not be reached") from exc
+            completion = await OpenAICompatibleChatClient().chat_completion(
+                messages,
+                max_tokens=500,
+                temperature=0.35,
+            )
+        except AIClientConfigurationError as exc:
+            raise TutorProviderError(str(exc)) from exc
+        except AIClientUnavailableError as exc:
+            raise TutorProviderError(str(exc)) from exc
+        except AIClientError as exc:
+            raise TutorProviderError(str(exc)) from exc
 
         try:
-            content = response.json()["choices"][0]["message"]["content"]
+            content = completion.content
             payload = self._decode_json(content)
             errors = [
                 LearningError(

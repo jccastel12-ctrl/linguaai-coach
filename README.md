@@ -2,7 +2,7 @@
 
 Plataforma SaaS de aprendizaje de idiomas asistida por IA. Idiomas de lanzamiento: **español**, **inglés** y **serbio** (alfabetos latino y cirílico).
 
-> Estado: **MVP v1.5.0**. Incluye autenticación, onboarding, perfiles, tutor conversacional, historial, progreso, traductor ES/EN/SR, voz básica de navegador, práctica de pronunciación, avatar tutor ligero, planes Basic/Pro, panel administrativo y experiencia móvil instalable como PWA. El análisis acústico de fonemas, checkout/pagos reales, avatares 3D/fotorrealistas y una app nativa siguen en la hoja de ruta.
+> Estado: **MVP v1.6.0**. Incluye autenticación, onboarding, perfiles, tutor conversacional, historial, progreso, traductor ES/EN/SR, voz básica de navegador, práctica de pronunciación, avatar tutor ligero, planes Basic/Pro, panel administrativo y experiencia móvil instalable como PWA. El análisis acústico de fonemas, checkout/pagos reales, avatares 3D/fotorrealistas y una app nativa siguen en la hoja de ruta.
 
 ---
 
@@ -376,6 +376,22 @@ Esta revisión adapta LinguaAI Coach para uso cotidiano desde teléfonos y table
 
 La PWA requiere Internet para Tutor IA, traducción, autenticación y sincronización. Las funciones de voz dependen del soporte de reconocimiento y síntesis del navegador/dispositivo.
 
+
+
+## Resiliencia del proveedor de IA (v1.6)
+
+La v1.6 añade reintentos automáticos y un modelo secundario opcional para Tutor y Traductor cuando el proveedor OpenAI-compatible devuelve errores transitorios como `429`, `502`, `503` o `504`, o cuando hay timeouts de red.
+
+Configuración recomendada para Gemini en staging:
+
+```env
+AI_MODEL=gemini-3.5-flash-lite
+AI_FALLBACK_MODEL=gemini-3.6-flash
+AI_RETRY_ATTEMPTS=3
+AI_RETRY_BACKOFF_SECONDS=0.7
+```
+
+El modelo secundario solo se usa si el principal no responde después de los reintentos. No se registran claves API ni contenido de las conversaciones.
 
 ## Traducción libre con Azure Translator
 
