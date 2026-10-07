@@ -36,6 +36,7 @@ function extractMessage(payload: unknown): string {
 function previewPhrase(languageCode: string, name: string): string {
   if (languageCode === "es") return `Hola, soy ${name}. Practiquemos juntos.`;
   if (languageCode === "sr") return `Zdravo, ja sam ${name}. Hajde da vežbamo zajedno.`;
+  if (languageCode === "it") return `Ciao, sono ${name}. Esercitiamoci insieme.`;
   return `Hello, I'm ${name}. Let's practice together.`;
 }
 

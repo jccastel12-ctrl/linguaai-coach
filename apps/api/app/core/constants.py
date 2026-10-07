@@ -13,6 +13,7 @@ SUPPORTED_LANGUAGES: tuple[dict[str, str], ...] = (
     {"code": "es", "name": "Spanish", "native_name": "Español"},
     {"code": "en", "name": "English", "native_name": "English"},
     {"code": "sr", "name": "Serbian", "native_name": "Српски / Srpski"},
+    {"code": "it", "name": "Italian", "native_name": "Italiano"},
 )
 
 

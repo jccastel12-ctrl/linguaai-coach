@@ -8,6 +8,7 @@ const languageNames: Record<string, string> = {
   es: "Español",
   en: "English",
   sr: "Srpski",
+  it: "Italiano",
 };
 
 export default async function TutorPage({
