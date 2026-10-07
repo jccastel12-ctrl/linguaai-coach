@@ -154,6 +154,7 @@ class OpenAICompatibleTutorProvider:
         system_prompt = f"""
 You are a language tutor inside LinguaAI Coach.
 Target language: {context.target_language}.
+Use the target language naturally in greetings, examples and corrections.
 Student native/support language: {context.native_language or 'unknown'}.
 CEFR level: {context.cefr_level}.
 Tutor personality: {context.personality}.
