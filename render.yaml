@@ -1,5 +1,4 @@
-# LinguaAI Coach - staging Blueprint for Render
-# Public HTTPS preview for browser and mobile testing.
+# LinguaAI Coach - Render Blueprint
 
 services:
   - type: web
@@ -10,7 +9,7 @@ services:
 
     buildCommand: pip install -r apps/api/requirements.txt
 
-    startCommand: cd apps/api && alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT --proxy-headers
+    startCommand: cd apps/api && uvicorn app.main:app --host 0.0.0.0 --port $PORT --proxy-headers
 
     healthCheckPath: /health/ready
 
@@ -36,13 +35,26 @@ services:
         value: ""
 
       - key: AI_PROVIDER
-        value: rule_based
+        value: openai_compatible
 
-      - key: PAYMENT_PROVIDER
-        value: disabled
+      - key: TRANSLATION_PROVIDER
+        value: openai_compatible
 
-      - key: EMAIL_DELIVERY_MODE
-        value: disabled
+      - key: AI_BASE_URL
+        value: https://generativelanguage.googleapis.com/v1beta/openai/
+
+      - key: AI_MODEL
+        value: gemini-3.5-flash-lite
+
+      - key: AI_FALLBACK_MODEL
+        value: gemini-3.6-flash
+
+      - key: AI_RETRY_ATTEMPTS
+        value: "3"
+
+      - key: AI_RETRY_BACKOFF_SECONDS
+        value: "0.7"
+
 
   - type: web
     name: linguaai-coach-web
@@ -60,14 +72,9 @@ services:
       - key: NODE_VERSION
         value: 20.18.0
 
-      - key: API_INTERNAL_URL
-        fromService:
-          name: linguaai-coach-api
-          type: web
-          envVarKey: RENDER_EXTERNAL_URL
-
       - key: NEXT_TELEMETRY_DISABLED
         value: "1"
+
 
 databases:
   - name: linguaai-coach-db
